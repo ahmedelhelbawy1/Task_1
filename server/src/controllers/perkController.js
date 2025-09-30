@@ -70,6 +70,31 @@ export async function createPerk(req, res, next) {
 // TODO
 // Update an existing perk by ID and validate only the fields that are being updated 
 export async function updatePerk(req, res, next) {
+
+
+  try {
+    // 1. Validate request body with Joi
+    const { value, error } = perkSchema.validate(req.body, { abortEarly: false, allowUnknown: true });
+    if (error) return res.status(400).json({ message: error.message });
+
+    // 2. Find the perk by ID and update it
+    const updatedPerk = await Perk.findByIdAndUpdate(
+      req.params.id,     // which perk to update
+      { $set: value },   // new values (only validated fields)
+      { new: true }      // return the updated document instead of the old one
+    );
+
+    // 3. Handle "not found"
+    if (!updatedPerk) {
+      return res.status(404).json({ message: 'Perk not found' });
+    }
+
+    // 4. Send back the updated document
+    res.json({ perk: updatedPerk });
+
+  } catch (err) {
+    next(err); // pass any errors to error handler
+  }
   
 }
 
